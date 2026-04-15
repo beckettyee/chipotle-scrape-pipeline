@@ -17,6 +17,27 @@ def slugify(text, max_length=80):
     return slug[:max_length].rstrip("-")
 
 
+def save_results(results, output_dir):
+    """Save Firecrawl results as frontmatter-annotated markdown files."""
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    for r in results:
+        slug = slugify(r["title"])
+        filename = f"{slug}.md"
+        scraped_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        frontmatter = (
+            f'---\n'
+            f'title: "{r["title"]}"\n'
+            f'url: "{r["url"]}"\n'
+            f'scraped_at: "{scraped_at}"\n'
+            f'---\n'
+        )
+        body = r.get("markdown") or ""
+        path = output_dir / filename
+        path.write_text(frontmatter + "\n" + body)
+        print(f"  saved: {path}")
+
+
 api_key = os.getenv("FIRECRAWL_API_KEY")
 
 # --- Step 01: Search + scrape with Firecrawl ---
